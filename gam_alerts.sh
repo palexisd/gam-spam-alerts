@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #The goal of this script is to investigate each email reported as spam in a Google Alerts without having
 #to get delegate access on a user's mailbox
 #The email will not be downloaded if the user deleted it from his trash/spam folder
@@ -33,13 +35,14 @@ option=$(echo $option | cut -d, -f1)
 #generate a json with the content of the alert
 json_output=$(/Users/$loggedInUser/bin/gamadv-xtd3/gam info alert $option formatjson)
 
-#run a gyb command to download each emails reported by users. Email will be stored in a .eml file to inspect using an offline mail client
+#create a directory to store downloads
 mkdir "/Users/$loggedInUser/Downloads/GoogleAlert_${option}_${current_date}"
 cd "/Users/$loggedInUser/Downloads/GoogleAlert_${option}_${current_date}"
 
 #use jq to only keep the needed information to run the gyb command. 
 json_output=$(/opt/homebrew/opt/jq/bin/jq -r '.data.messages[] | "\(.messageId) \(.recipient)"' <<< "$json_output")
 
-echo $json_output | while read -r messageId recipient; do
+#run a gyb command to download each emails reported by users. Email will be stored in a .eml file to inspect using an offline mail client
+echo "${json_output}" | while read -r messageId recipient; do
 	/Users/$loggedInUser/bin/gyb/gyb --email $recipient --search "rfc822msgid:$messageId" --spam-trash --service-account
 done
